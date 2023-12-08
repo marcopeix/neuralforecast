@@ -84,6 +84,7 @@ class TSMixer(BaseMultivariate):
     `n_series`: int, number of time-series.<br>
     `dropout_rate`: float, rate of dropout in the MLP<br>
     `n_blocks`: int, number of mixing blocks<br>
+    `ff_dim`: int, dimensions of the feedforward layer for the feature mixing block<br>
     `stat_exog_list`: str list, static exogenous columns.<br>
     `hist_exog_list`: str list, historic exogenous columns.<br>
     `futr_exog_list`: str list, future exogenous columns.<br>
@@ -181,12 +182,11 @@ class TSMixer(BaseMultivariate):
         y = insample_y.clone()
         for _ in range(self.n_blocks):
             y = self.time_mixing(y)
-        y = self.feature_mixing(y)
+            y = self.feature_mixing(y)
         y = torch.permute(y, (0, 2, 1))
         y = self.linear(y)
         y = torch.permute(y, (0, 2, 1))
 
-        # y_pred = y.reshape(self.batch_size, self.h, self.loss.outputsize_multiplier)
         y_pred = self.loss.domain_map(y)
 
         return y_pred
