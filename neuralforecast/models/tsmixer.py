@@ -173,6 +173,13 @@ class TSMixer(BaseMultivariate):
         self.feature_mixing = FeatureMixingBlock(
             input_size, self.dropout_rate, self.ff_dim
         )
+        self.mixing_blocks = nn.ModuleList(
+            [
+                block
+                for _ in range(self.n_blocks)
+                for block in [self.time_mixing, self.feature_mixing]
+            ]
+        )
         self.linear = nn.Linear(input_size, h)
 
     def forward(self, windows_batch):
@@ -180,9 +187,8 @@ class TSMixer(BaseMultivariate):
         insample_y = windows_batch["insample_y"]
 
         y = insample_y.clone()
-        for _ in range(self.n_blocks):
-            y = self.time_mixing(y)
-            y = self.feature_mixing(y)
+        for block in self.mixing_blocks:
+            y = block(y)
         y = torch.permute(y, (0, 2, 1))
         y = self.linear(y)
         y = torch.permute(y, (0, 2, 1))
